@@ -4,6 +4,8 @@ from src.sources import FileTaskSource, GeneratorTaskSource, ApiStubTaskSource
 from src.collector import TaskCollector
 from src.logger import log_info, log_error
 from src.exceptions import TaskValidationError, TaskStateError
+from src.queue import TaskQueue
+from src.lazy_filters import filter_by_status, filter_by_priority
 
 
 def create_test_file(filepath: str) -> None:
@@ -70,6 +72,25 @@ def main() -> None:
         log_info(f'  После start(): {task.status}')
         task.complete()
         log_info(f'  После complete(): {task.status}')
+
+    log_info('===Демонстрация очереди задач===')
+    # Создаём очередь и добавляем собранные задачи
+    queue = TaskQueue()
+    for task in tasks:
+        queue.add(task)
+
+    # Демонстрация итерации
+    log_info('Итерация по очереди:')
+    for task in queue:
+        log_info(f'  ID={task.id}, статус={task.status}')
+
+    # Демонстрация ленивого фильтра
+    log_info('Фильтр по статусу "created":')
+    for task in filter_by_status(queue, 'created'):
+        log_info(f'  {task.description}')
+
+    # Повторная итерация (проверка, что очередь не "одноразовая")
+    log_info(f'Повторная итерация: {len(list(queue))} задач')
 
     # Очистка
     if os.path.exists(test_file):
